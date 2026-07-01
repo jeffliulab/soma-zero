@@ -1,163 +1,35 @@
-# ============================================================
-# soma_home_exp_v1 — ROS 2 workspace .gitignore
-# ============================================================
-
-# ------------------------------------------------------------
-# ROS 2 / colcon build artifacts
-# ------------------------------------------------------------
-build/
-install/
-log/
-.colcon/
-COLCON_IGNORE
-AMENT_IGNORE
-
-# ROS bag recordings (can be huge)
-*.bag
-*.db3
-*.mcap
-rosbag2_*/
-bags/
-recordings/
-
-# ------------------------------------------------------------
 # Python
-# ------------------------------------------------------------
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-*.egg
 *.egg-info/
-.eggs/
-dist/
-*.manifest
-*.spec
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Virtual environments
 .venv/
 venv/
 env/
-ENV/
-.python-version
-
-# Test / coverage
 .pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.tox/
-.nox/
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-.hypothesis/
-
-# Jupyter
 .ipynb_checkpoints/
-*.ipynb_checkpoints
 
-# ------------------------------------------------------------
-# Models / weights / large binary assets
-# ------------------------------------------------------------
+# ROS / colcon
+build/
+install/
+log/
+
+# Models & data (keep out of git; track with a model registry instead)
+*.ckpt
 *.pt
 *.pth
-*.onnx
-*.engine
-*.trt
-*.bin
 *.safetensors
-*.gguf
-*.ckpt
-*.h5
-*.pkl
-*.npy
-*.npz
-weights/
-checkpoints/
-models/pretrained/
-
-# ------------------------------------------------------------
-# Datasets / generated data
-# ------------------------------------------------------------
-data/raw/
-data/processed/
+*.onnx
+data/
 datasets/
-*.lmdb
-*.tfrecord
+recordings/
+*.bag
 
-# Point clouds, meshes generated at runtime
-*.pcd
-*.ply
-# Keep meshes that ship with the URDF — uncomment to override:
-# !src/arm_description/meshes/**/*.stl
-# !src/arm_description/meshes/**/*.dae
-
-# ------------------------------------------------------------
-# Gazebo / simulation cache
-# ------------------------------------------------------------
-.gazebo/
-.ignition/
-.gz/
-
-# ------------------------------------------------------------
 # Secrets / local config
-# ------------------------------------------------------------
 .env
-.env.*
-!.env.example
-*.key
-*.pem
-secrets/
-credentials/
+*.local
 
-# ------------------------------------------------------------
-# Logs / temporary
-# ------------------------------------------------------------
-*.log
-logs/
-tmp/
-temp/
-*.tmp
-*.bak
-*.swp
-*.swo
-*~
-
-# ------------------------------------------------------------
-# IDE / editor
-# ------------------------------------------------------------
-.vscode/
-!.vscode/settings.json.example
-.idea/
-*.iml
-*.code-workspace
-.cursorrules
-.aider*
-
-# Claude Code local settings (if any leak in)
-.claude/
-
-# ------------------------------------------------------------
-# OS
-# ------------------------------------------------------------
+# OS / editor
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# others/personal files
-个人用笔记
-个人用笔记.md
-个人用笔记/
-开发进度与待办事项
-开发进度与待办事项.md
-开发进度与待办事项/
+.idea/
+.vscode/

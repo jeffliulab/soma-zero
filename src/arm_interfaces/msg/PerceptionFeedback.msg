@@ -1,9 +1,0 @@
-builtin_interfaces/Time stamp
-bool board_visible
-float32 board_confidence
-int32 corners_detected
-float32 object_confidence
-float32 mean_luma
-float32 overexposed_ratio
-float32 sharpness
-string requested_mode

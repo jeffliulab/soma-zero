@@ -1,61 +1,72 @@
 # SOMA Zero
 
-**The open body of a chess-playing robot.** SOMA Zero is the *body* half of an embodied
-chess system: it **sees the board and moves the pieces**. The *brain* that decides which
-move to play lives in a separate repo, [`anima-zero`](https://github.com/jeffliulab/anima-zero).
+**An open embodied-intelligence project: the body side of a robot.** SOMA Zero is about
+**embodied strategy** — how a physical robot *perceives* its workspace and *acts* in it with a
+learned Vision-Language-Action (VLA) policy. It is **brain-agnostic**: any decision-making
+framework can drive this body through a small, neutral contract.
 
-> **Flagship demo — VLA Chess.** A real robot arm plays physical chess: a camera reads the
-> board, ANIMA (the brain) chooses a move, and SOMA (this body) carries it out — picking up
-> and placing the piece with a learned Vision-Language-Action (VLA) policy.
+> **Flagship task — physical chess.** A real robot arm plays chess on a real board: the camera
+> reads the scene, a brain (whichever one is plugged in) chooses a move, and SOMA carries it
+> out — picking up and placing the piece with a VLA policy. Chess is the *first task profile*,
+> chosen because it is long-horizon and unforgiving of sloppy manipulation — it is not the
+> project's identity.
 
 This is the **Zero** line — fully open source, meant to show the project end to end.
 Deeper production work continues in private repos.
 
 ---
 
-## Thinking vs. acting — why two repos
+## The body's promise (to any brain)
 
-The system is split along the one boundary that actually matters: **thinking vs. acting.**
+SOMA does the *acting* half of the classic **System 1 / System 2** split — fast, reflexive,
+high-frequency. Its promise to whatever brain is attached:
+
+- **One atomic action per command** ("move piece e2 → e4"), human-readable, never joint angles.
+- **An honest report back** — success / failure / why, including execution self-checks.
+- **No thinking on its own**: it does not plan, does not judge task success, does not retry.
+  Retry, recovery, and verification always belong to the brain — *whichever* brain that is.
 
 ```
-            ┌──────────────────────────┐
-   camera ─▶│  SOMA · perception (eyes) │── board state ─┐
-            └──────────────────────────┘                │
-                                                         ▼
-                                            ┌────────────────────────┐
-                                            │  ANIMA (brain, anima-  │
-                                            │  zero) — decides move  │
-                                            └────────────────────────┘
-                                                         │ action intent
-            ┌──────────────────────────┐                ▼
-   arm   ◀──│  SOMA · control (hands)  │◀── "move piece e2→e4" ──────┘
-            └──────────────────────────┘
+                 ┌──────────────── SOMA Zero (this repo) ────────────────┐
+                 │                                                        │
+   sensors ────▶ │  perception (eyes) ──▶ scene state ─┐                  │
+                 │                                     │   neutral        │
+                 │                              interface/ contract       │
+                 │                                     │                  │
+   actuator ◀─── │  control (hands, VLA) ◀── action intent ◀──┐           │
+                 │                                            │           │
+                 └────────────────────────────────────────────┼───────────┘
+                                                              │
+                                              adapters/ ──▶ any brain
+                                              (protocol translation)
 ```
 
-- **ANIMA** (brain, *System 2*) — slow, deliberate. Given the board, it decides the best
-  move, judges whether the move actually landed, and decides whether to retry. Separate repo.
-- **SOMA** (body, *System 1*) — fast, reflexive. It reads the world and, when commanded,
-  carries out **one** atomic action in physical space. It does **not** plan, **not** judge
-  success, and **not** retry on its own — that is the brain's job.
-
-The two never import each other's code. They talk only through a small, versioned
-**contract** (see [`interface/`](interface/)): board state in, action intent out, execution
-result back. That seam keeps the brain swappable and the body reusable — and it is exactly
-how SOMA plugs into ANIMA as its real-world "world".
+The body core never imports any brain framework. Each brain gets a thin **adapter** that
+translates the neutral contract into that framework's wire protocol.
 
 ## What's inside
 
 | Folder | Role | Status |
 |---|---|---|
-| [`perception/`](perception/) | Eyes — read the chessboard from an RGB camera into a board state | 🚧 early |
-| [`control/`](control/) | Hands — VLA policy + arm execution to move a single piece | 🚧 early |
-| [`interface/`](interface/) | The brain↔body contract (board-state in, action intent out, result back) | 🚧 early |
+| [`perception/`](perception/) | Eyes — turn camera images of the workspace into structured scene state | 🚧 early |
+| [`control/`](control/) | Hands — VLA policy + arm execution for one atomic action | 🚧 early |
+| [`interface/`](interface/) | The neutral brain↔body contract (observation / action intent / result / progress) | 🚧 early |
+| [`adapters/`](adapters/) | Per-brain protocol translation (one subfolder per supported brain) | 🚧 docs first |
 | [`docs/`](docs/) | Architecture & design notes | 🚧 early |
+
+## Supported brains
+
+| Brain | Protocol | Status |
+|---|---|---|
+| [`anima-zero`](https://github.com/jeffliulab/anima-zero) | AWI over MCP — SOMA mounts as one of ANIMA's "worlds" | 📝 [integration guide](adapters/anima/) (docs first) |
+
+Any framework that can act as an MCP host — or speak a similarly small tool/observation
+protocol — can drive this body the same way. See [`adapters/`](adapters/) for the pattern.
 
 ## Hardware
 
 - Episode servo/serial robot arm with a servo gripper
-- RGB webcam (no depth) for board perception
+- RGB webcam (no depth) for workspace perception
 
 > ⚠️ **Safety.** This arm has no effective hardware e-stop — cutting power is the only real
 > stop, and the joints go limp when power is removed. Every command that moves the physical
@@ -70,15 +81,16 @@ started; the full history of those attempts also lives in this repo's git log.
 
 ## Roadmap
 
-- [ ] Board perception: camera → reliable board state
-- [ ] One-shot board extrinsic calibration (board square → world coordinates)
+- [ ] Workspace perception: camera → reliable structured scene state (first task profile: chessboard)
+- [ ] One-shot extrinsic calibration (board square → world coordinates)
 - [ ] VLA pick-and-place: execute a single move as **one** atomic action, returning an honest
       self-report (`ActionResult`)
-- [ ] Plug into ANIMA as a world; full game loop — ANIMA perceives → decides → SOMA executes
-      one move → repeat
+- [ ] Expose the body as a server so any supported brain can drive it (first adapter:
+      [`adapters/anima/`](adapters/anima/)); full task loop — brain perceives → decides →
+      SOMA executes one action → repeat
 
-> The closed loop (retry, recovery, verifying a move actually worked) lives in **ANIMA**, not
-> here. SOMA's job is to do one action well and report back honestly.
+> The closed loop (retry, recovery, verifying an action actually worked) lives in the **brain**,
+> not here. SOMA's job is to do one action well and report back honestly.
 
 ## License
 

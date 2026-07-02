@@ -1,45 +1,55 @@
 # Architecture
 
-## The one boundary that matters: thinking vs. acting
+## A body, with the brain outside the system boundary
 
-The system is split into two repos along the seam between cognition and embodiment:
-
-- **ANIMA** (`anima-zero`) — the brain. Decides *what* to do.
-- **SOMA** (`soma-zero`, this repo) — the body. Senses the world and *does* it.
-
-They never share code. They share only a versioned contract (`interface/`). This means:
-
-- The brain can be replaced (a different engine, a stronger model) without touching the body.
-- The body can be reused for a different task by swapping the brain and the contract's verbs.
-- Either side can be tested in isolation against a mock of the other.
-
-## Data flow (VLA chess)
+SOMA Zero is the **body**: everything between the sensors and the actuators. The brain —
+whatever framework decides what to do — sits *outside* this repo's boundary and talks to the
+body through a thin adapter.
 
 ```
-   ┌─────────────────────────── SOMA (this repo) ───────────────────────────┐
-   │                                                                          │
-   │   camera ─▶ perception ──(board state)──┐                                │
-   │                                          │                               │
-   └──────────────────────────────────────────┼───────────────────────────────┘
-                                              ▼
-                                  ┌────────────────────────┐
-                                  │   ANIMA (anima-zero)   │
-                                  │   chooses a move       │
-                                  └────────────────────────┘
-                                              │ action intent
-   ┌──────────────────────────────────────────┼───────────────────────────────┐
-   │                                          ▼                                │
-   │   arm ◀── control ◀──(verify + retry)──(action intent)                    │
-   │                                                                          │
-   └─────────────────────────── SOMA (this repo) ───────────────────────────┘
+   ┌────────────────────────── SOMA Zero (this repo) ──────────────────────────┐
+   │                                                                            │
+   │   sensors ──▶ perception ──▶ structured scene state ─┐                     │
+   │   (camera)      (eyes)                               │                     │
+   │                                              interface/ contract           │
+   │                                                       │                    │
+   │   actuator ◀── control ◀───── action intent ◀─────────┤                    │
+   │   (arm)        (hands, VLA)                           │                    │
+   │                                                       │                    │
+   └───────────────────────────────────────────────────────┼────────────────────┘
+                                                            │
+                                             adapters/<brain>  (protocol translation)
+                                                            │
+                                                   ┌────────▼────────┐
+                                                   │   any brain     │
+                                                   │ (decides, judges│
+                                                   │  retries)       │
+                                                   └─────────────────┘
 ```
 
-## Why split into separate repos (and not a monorepo)
+## Layering principles
 
-ANIMA and SOMA have **different runtimes** (cognitive stack vs. real-time robot control) and
-this Zero line is meant to be **independently open-sourced and showcased**. As long as the
-`interface/` contract stays stable, the two evolve on their own cadence. The cost of the split
-— keeping the contract in sync — is paid in one small, deliberately stable place.
+- **The body executes one atomic action per command and reports honestly.** It never plans,
+  never judges task success, never retries on its own. Retry, recovery, and verification
+  belong to the brain — *any* brain. Execution self-checks (gripper closed? force plausible?)
+  are included in the result as early-stop hints, not as verdicts.
+- **The body holds physical reality, not task truth.** Perception reports what the camera
+  sees; whether that constitutes "the move worked" is the brain's judgement.
+- **The body core never imports a brain framework.** All framework-specific code lives in
+  [`adapters/`](../adapters/) — one thin translation layer per brain.
+
+## Why an independent repo
+
+- **Different runtimes.** Real-time robot control (high-frequency, hardware-coupled) and a
+  cognitive stack (slow, LLM-driven) want different processes, dependencies, and cadences.
+- **One body, many brains.** The point of the neutral contract is that the same body can be
+  driven by different frameworks; welding the body into any single brain's repo would defeat
+  that.
+- **Independently showcased.** The Zero line open-sources the body as a project in its own
+  right, with embodied strategy (perception + VLA control) as the core contribution.
+
+The cost of the split — keeping the contract in sync — is paid in one small, deliberately
+stable place ([`interface/`](../interface/)).
 
 ## Status
 

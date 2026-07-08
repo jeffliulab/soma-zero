@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gazebo-chess"
+version = "0.4.0"
+description = "gazebo-chess —— ANIMA 的一个独立『世界』：sim-chess 的 Gazebo 3D 物理版，机械臂用真实夹爪抓放棋子；经 HTTP(AWI) 被观测和操作，只给画面+命令成败，不给真值。v0.4 最小版：盘上一个子、能真夹起跑通 infra。"
+readme = "README.md"
+requires-python = ">=3.11"
+# 注意：本世界还需要系统 ROS2（rclpy / moveit / ros_gz）——用 `python3 -m venv --system-site-packages .venv`
+# 让虚拟环境能 import 到系统 ROS2 包（照 camera 世界的做法）。下面只列 pip 能装的部分。
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "pydantic>=2.6",
+    "numpy>=1.26",
+    "opencv-python>=4.9",
+    "chess>=1.10",
+    "mcp>=1.2",         # 世界作 MCP server 暴露 AWI(tools/resources/prompts);挂在 /mcp
+]
+
+[tool.setuptools]
+py-modules = ["server", "world", "arm_controller", "grasp_pose", "vision", "geometry", "spawn", "render", "config", "awi_mcp", "referee", "models", "board_texture"]

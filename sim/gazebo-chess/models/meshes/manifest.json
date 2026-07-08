@@ -1,0 +1,12 @@
+{
+  "set": "Low Poly Chess Set (JustinARay, OpenGameArt, CC-BY 4.0) — 详见 SOURCE.md",
+  "comment": "natural_height_m = 原始 STL 的实测包围盒高（scripts 里 stl 工具可复核）。运行时缩放系数 = (PIECE_HEIGHT_M × 身高梯度因子) / natural_height_m，由 models.py 按 config 派生——不在此写死系数。",
+  "pieces": {
+    "p": {"file": "p.stl", "natural_height_m": 0.0585},
+    "n": {"file": "n.stl", "natural_height_m": 0.0722},
+    "b": {"file": "b.stl", "natural_height_m": 0.0885},
+    "r": {"file": "r.stl", "natural_height_m": 0.0696},
+    "q": {"file": "q.stl", "natural_height_m": 0.1210},
+    "k": {"file": "k.stl", "natural_height_m": 0.0976}
+  }
+}

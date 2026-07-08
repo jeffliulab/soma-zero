@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>gazebo-chess 世界</title>
+  <style>
+    body { margin: 0; background: #14161a; color: #d6d9de; font: 14px/1.6 system-ui, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    .sub { color: #8a909a; margin-bottom: 12px; }
+    .bar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    button { background: #2b6cb0; color: #fff; border: 0; border-radius: 6px; padding: 7px 16px;
+             font-size: 14px; cursor: pointer; }
+    button:disabled { background: #3a3f47; cursor: wait; }
+    #msg { color: #9ae6b4; font-size: 13px; }
+    #ref { color: #8a909a; font-size: 13px; white-space: pre-wrap; }
+    .views { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .view { background: #000; border: 1px solid #2a2e35; border-radius: 8px; overflow: hidden; }
+    .view img { width: 100%; display: block; }
+    .cap { padding: 4px 10px; color: #8a909a; font-size: 12px; border-top: 1px solid #2a2e35; }
+    .note { color: #8a909a; margin-top: 12px; font-size: 13px; }
+    code { background: #20242b; padding: 1px 5px; border-radius: 4px; }
+    @media (max-width: 760px) { .views { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>gazebo-chess · 物理棋盘世界</h1>
+    <div class="sub">Gazebo 里的机械臂用真实夹爪抓放棋子；对局模式下世界内置裁判与瞬移电脑对手。下面是两路相机的实时画面（与 ANIMA 看到的一致）。</div>
+    <div class="bar">
+      <button id="resetBtn">开新局</button>
+      <span id="msg"></span>
+      <span id="ref"></span>
+    </div>
+    <div class="views" id="views"></div>
+    <div class="note">
+      对大脑的物理原语（MCP）：<code>move</code> / <code>remove</code> / <code>place</code>；
+      上帝视角真值见 <code>/status</code>（绝不给大脑）。「开新局」只在这个人类页面上——大脑不许重置现实。
+      画面没出来？确认 episode 仿真栈在跑、且 <code>image_bridge</code> 在桥相机图。
+    </div>
+  </div>
+  <script>
+    // 相机自发现：几路就摆几格
+    fetch('/streams').then(r => r.json()).then(list => {
+      const box = document.getElementById('views');
+      box.innerHTML = list.map(s =>
+        `<div class="view"><img src="${s.url}" alt="${s.name}"><div class="cap">${s.name}</div></div>`).join('');
+      if (list.length === 1) box.style.gridTemplateColumns = '1fr';
+    });
+    // 裁判状态（有裁判才显示；轮询 3s 一次）
+    async function poll() {
+      try {
+        const st = await (await fetch('/status')).json();
+        const r = st.referee;
+        document.getElementById('ref').textContent = r
+          ? `裁判：轮到${r.turn === 'white' ? '白' : '黑'}方 · 已走 ${r.moves} 步` +
+            (r.over ? ` · 对局结束（${r.result || '未分'}）` : '') +
+            (r.pending ? ` · 进行中：${r.pending}` : '')
+          : '';
+      } catch (e) { /* 世界重启间隙，忽略 */ }
+    }
+    poll(); setInterval(poll, 3000);
+    // 开新局（清盘重摆，几十秒；按钮期间置灰）
+    document.getElementById('resetBtn').onclick = async () => {
+      const btn = document.getElementById('resetBtn'), msg = document.getElementById('msg');
+      btn.disabled = true; msg.textContent = '正在开新局（清盘重摆，需要一会儿）…';
+      try {
+        const res = await (await fetch('/reset', { method: 'POST' })).json();
+        msg.textContent = res.message || '完成';
+      } catch (e) { msg.textContent = '开新局失败：' + e; }
+      btn.disabled = false; poll();
+    };
+  </script>
+</body>
+</html>
